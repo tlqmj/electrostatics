@@ -65,8 +65,6 @@ class Simulation {
        throw "ARGUMENT ERROR in Simulation.set_simple_boundary_condition. val must be a number"
     }
 
-    console.log("HELLOOOO")
-
     for (var i = 0; i < this.m; i++) {
       this.ie.data[i*this.n]              = true;
       this.ie.data[i*this.n * (this.n-1)] = true;
