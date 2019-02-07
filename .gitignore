@@ -30,8 +30,3 @@
 *.exe
 *.out
 *.app
-
-# Compiled WASM
-electrostatics_wasm.html
-electrostatics_wasm.js
-electrostatics_was.wasm

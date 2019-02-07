@@ -1,0 +1,28 @@
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+}
+.container {
+  max-width: 100%;
+  height: 100%
+}
+
+#plotPane {
+  height: 100%;
+}
+
+#mainRow {
+  height: 95%;
+}
+
+#description {
+  margin-top: 3em;
+}
+
+#footer {
+  height: 5%;
+  color: #9b9a9a;
+}

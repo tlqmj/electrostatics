@@ -26,12 +26,20 @@ class Simulation {
     this.v.ptr    = Module._malloc(this.v.nbytes);
     this.v.heap   = new Uint8Array(Module.HEAPU8.buffer, this.v.ptr, this.v.nbytes);
     this.v.data   = new Float32Array( this.v.heap.buffer, this.v.heap.byteOffset, this.m*this.n);
+    this.v.mat   = []
+    for (var i = 0; i < this.m; i++) {
+      this.v.mat.push(new Float32Array(this.v.heap.buffer, this.v.heap.byteOffset + i*Float32Array.BYTES_PER_ELEMENT*this.n, this.n))
+    }
 
     this.ie = {};
     this.ie.bytes = this.m*this.n*Uint8Array.BYTES_PER_ELEMENT;
     this.ie.ptr   = Module._malloc(this.ie.bytes);
     this.ie.heap  = new Uint8Array(Module.HEAPU8.buffer, this.ie.ptr, this.ie.bytes);
     this.ie.data  = new Uint8Array(  this.ie.heap.buffer, this.ie.heap.byteOffset, this.m*this.n);
+    this.ie.mat = []
+    for (var i = 0; i < this.m; i++) {
+      this.ie.mat.push(new Uint8Array(this.ie.heap.buffer, this.ie.heap.byteOffset + i*Uint8Array.BYTES_PER_ELEMENT*this.n, this.n))
+    }
 
     if (typeof(v) != 'undefined' && typeof(ie) != 'undefined') {
       this.set(v, ie);

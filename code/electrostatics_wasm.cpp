@@ -44,9 +44,10 @@ extern "C"
     while(iters < maxiter && max_delta > tol) {
         max_delta = sor_step(V, is_electrode, m, n, coefficient);
         iters++;
-        std::cout << "Number of iterations: " << iters << ", Delta: " << max_delta << '\n';
     }
 
+    std::cout << "Simulation complete." << '\n';
+    std::cout << "Number of iterations: " << iters << ", Delta: " << max_delta << '\n';
     return max_delta;
   }
 
