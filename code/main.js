@@ -14,7 +14,7 @@ var Module = {
     plot = {
       div: 'plotPane',
       data: [{
-        z:sim.v.mat,
+        z:sim.v.data,
         type:'surface',
         colorscale:'Viridis',
         //aspectratio: {x: 1, y: 1},

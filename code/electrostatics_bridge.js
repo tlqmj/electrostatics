@@ -20,33 +20,33 @@ class Simulation {
     this.m = m;
     this.n = n;
 
-    // Allocate arrays in emscripten memory and create views ('v.data' and 'ie.data') for easy access from js.
+    // Allocate arrays in emscripten memory and create views ('v.data',
+    // 'v.data_vec', 'ie.data' and 'ie.data_vec') for easy access from js.
     this.v = {};
-    this.v.nbytes = m*n*Float32Array.BYTES_PER_ELEMENT;
-    this.v.ptr    = Module._malloc(this.v.nbytes);
-    this.v.heap   = new Uint8Array(Module.HEAPU8.buffer, this.v.ptr, this.v.nbytes);
-    this.v.data   = new Float32Array( this.v.heap.buffer, this.v.heap.byteOffset, this.m*this.n);
-    this.v.mat   = []
+    this.v._ptr    = Module._malloc(this.m*this.n*Float32Array.BYTES_PER_ELEMENT);
+    this.v._heap   = new Uint8Array(Module.HEAPU8.buffer, this.v._ptr, this.m*this.n*Float32Array.BYTES_PER_ELEMENT);
+    this.v.data_vec   = new Float32Array( this.v._heap.buffer, this.v._heap.byteOffset, this.m*this.n);
+    this.v.data   = []
     for (var i = 0; i < this.m; i++) {
-      this.v.mat.push(new Float32Array(this.v.heap.buffer, this.v.heap.byteOffset + i*Float32Array.BYTES_PER_ELEMENT*this.n, this.n))
+      this.v.data.push(new Float32Array(this.v._heap.buffer, this.v._heap.byteOffset + i*Float32Array.BYTES_PER_ELEMENT*this.n, this.n))
     }
 
     this.ie = {};
-    this.ie.bytes = this.m*this.n*Uint8Array.BYTES_PER_ELEMENT;
-    this.ie.ptr   = Module._malloc(this.ie.bytes);
-    this.ie.heap  = new Uint8Array(Module.HEAPU8.buffer, this.ie.ptr, this.ie.bytes);
-    this.ie.data  = new Uint8Array(  this.ie.heap.buffer, this.ie.heap.byteOffset, this.m*this.n);
-    this.ie.mat = []
+    this.ie._ptr   = Module._malloc(this.m*this.n*Uint8Array.BYTES_PER_ELEMENT);
+    this.ie._heap  = new Uint8Array(Module.HEAPU8.buffer, this.ie._ptr, this.m*this.n*Uint8Array.BYTES_PER_ELEMENT);
+    this.ie.data_vec  = new Uint8Array(  this.ie._heap.buffer, this.ie._heap.byteOffset, this.m*this.n);
+    this.ie.data = []
     for (var i = 0; i < this.m; i++) {
-      this.ie.mat.push(new Uint8Array(this.ie.heap.buffer, this.ie.heap.byteOffset + i*Uint8Array.BYTES_PER_ELEMENT*this.n, this.n))
+      this.ie.data.push(new Uint8Array(this.ie._heap.buffer, this.ie._heap.byteOffset + i*Uint8Array.BYTES_PER_ELEMENT*this.n, this.n))
     }
 
-    if (typeof(v) != 'undefined' && typeof(ie) != 'undefined') {
+    if (v !== undefined && ie !== undefined) {
       this.set(v, ie);
     } else {
-      this.v.data.fill(0.0);
-      this.ie.data.fill(false);
+      this.v.data_vec.fill(0.0);
+      this.ie.data_vec.fill(false);
       this.set_simple_boundary_condition();
+
     }
   }
 
@@ -61,35 +61,35 @@ class Simulation {
     if(!(v.length  == this.m*this.n)) throw "ARGUMENT ERROR in Simulation.set. v must have length m*n."
     if(!(ie.length == this.m*this.n)) throw "ARGUMENT ERROR in Simulation.set. ie must have length m*n."
 
-    this.v.heap.set(new Uint8Array(v.buffer));
-    this.ie.heap.set(new Uint8Array(ie.buffer));
+    this.v._heap.set(new Uint8Array(v.buffer));
+    this.ie._heap.set(new Uint8Array(ie.buffer));
   }
 
   // Sets boundary as an electrode
   // INPUTS:
   //   [val]: voltage of the electrode at the boundary.
   set_simple_boundary_condition(val) {
-    if (typeof(val) != 'undefined' && typeof(val) != 'number') {
+    if (val !== undefined && typeof(val) != 'number') {
        throw "ARGUMENT ERROR in Simulation.set_simple_boundary_condition. val must be a number"
     }
 
     for (var i = 0; i < this.m; i++) {
-      this.ie.data[i*this.n]              = true;
-      this.ie.data[i*this.n * (this.n-1)] = true;
+      this.ie.data[i][0]        = true;
+      this.ie.data[i][this.n-1] = true;
 
-      if (typeof(val) != 'undefined') {
-        this.v.data[i*this.n]              = val;
-        this.v.data[i*this.n * (this.n-1)] = val;
+      if (val !== undefined) {
+        this.v.data[i][0]        = val;
+        this.v.data[i][this.n-1] = val;
       }
     }
 
     for (var j = 0; j < this.n; j++) {
-      this.ie.data[j]                     = true;
-      this.ie.data[(this.m-1)*this.n + j] = true;
+      this.ie.data[0][j]        = true;
+      this.ie.data[this.m-1][j] = true;
 
-      if (typeof(val) != 'undefined') {
-        this.v.data[j]                     = val;
-        this.v.data[(this.m-1)*this.n + j] = val;
+      if (val !== undefined) {
+        this.v.data[0][j]        = val;
+        this.v.data[this.m-1][j] = val;
       }
     }
   }
@@ -104,32 +104,45 @@ class Simulation {
     if(!(omega >= 1 && omega < 2))                  throw "ARGUMENT ERROR in Simulation.run. omega must be such that 1 <= omega < 2."
     if(!(Number.isInteger(maxiter) && maxiter > 0)) throw "ARGUMENT ERROR in Simulation.run. maxiter must be a positive integer."
 
-    return sor(this.v.heap.byteOffset, this.ie.heap.byteOffset, this.m, this.n, omega, maxiter, tol);
+    return sor(this.v._heap.byteOffset, this.ie._heap.byteOffset, this.m, this.n, omega, maxiter, tol);
   }
 
   add_electrode(i, j, val) {
     if(!(i >= 0 && i < this.m && j >= 0 && j < this.n)) throw "ARGUMENT ERROR in Simulation.add_electrode. Invalid index (i,j)"
+    if(typeof(val) != 'number') throw "ARGUMENT ERROR in Simulation.add_electrode. val has to be a number"
 
-    this.v.data[ i*this.n + j] = val;
-    this.ie.data[i*this.n + j] = true;
+    this.v.data[i][j]  = val;
+    this.ie.data[i][j] = true;
   }
 
   remove_electrode(i, j) {
     if(!(i >= 0 && i < this.m && j >= 0 && j < this.n)) throw "ARGUMENT ERROR in Simulation.remove_electrode. Invalid index (i,j)"
 
-    this.v.data[ i*this.n + j] = 0.0;
-    this.ie.data[i*this.n + j] = false;
+    this.v.data[i][j]  = 0.0;
+    this.ie.data[i][j] = false;
   }
 
+  // Resets the simulation result.
+  // Keeps the electrode configuration as is so that the same situation
+  // can be simulated with different parameters
   reset() {
     for (var i = 0; i < this.m*this.n; i++) {
-      if (!this.ie.data[i]) this.v.data[i] = 0.0;
+      if (!this.ie.data_vec[i]) this.v.data_vec[i] = 0.0;
     }
   }
 
+  // Clears everything.
+  // You end up with a blank simulation canvas so that a new configuration
+  // can be simulated.
+  clear() {
+    this.v.data_vec.fill(0.0);
+    this.ie.data_vec.fill(false);
+    this.set_simple_boundary_condition();
+  }
+
   free() {
-    Module._free(this.v.ptr);
-    Module._free(this.ie.ptr);
+    Module._free(this.v._ptr);
+    Module._free(this.ie._ptr);
 
     this.m  = undefined;
     this.n  = undefined;
