@@ -134,7 +134,7 @@ class Simulation {
     this.set_simple_boundary_condition();
   }
 
-  free() {
+  destroy() {
     this.v.destroy();
     this.ie.destroy();
     this.e.u.destroy();
