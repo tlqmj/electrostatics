@@ -51,4 +51,66 @@ extern "C"
     return max_delta;
   }
 
+  // Calculate electric field approximating E = -∇V with
+  // forward, backward, and central differences where appropiate.
+  void electric_field(
+    float *E_u,
+    float *E_v,
+    float *V,
+    int   m,
+    int   n)
+  {
+    // Reference:
+    //    o : No component of E calculated.
+    //    ━╸: x component calculated.
+    //    ┃ : y component calculated.
+    //    ┗╸: Both components calculated.
+
+    // Center x-direction
+    //
+    // o   ━╸  ━╸   o
+    // o   ━╸  ━╸   o
+    // o   ━╸  ━╸   o
+    // o   ━╸  ━╸   o
+    //
+    for (size_t i = 0; i < m; i++) { for (size_t j = 1; j < n-1; j++) {
+      E_u[i*n + j] = (V[i*n + (j-1)] - V[i*n + (j+1)])/2.0;
+    }}
+
+    // Center y-direction
+    //
+    // o   ━╸  ━╸   o
+    // ┃   ┗╸  ┗╸   ┃
+    // ┃   ┗╸  ┗╸   ┃
+    // o   ━╸  ━╸   o
+    //
+    for (size_t i = 1; i < m-1; i++) { for (size_t j = 0; j < n; j++) {
+      E_v[i*n + j] = (V[(i-1)*n + (j-1)] - V[(i+1)*n + j])/2.0;
+    }}
+
+    // Sides x-direction
+    //
+    // ━╸  ━╸  ━╸  ━╸
+    // ┗╸  ┗╸  ┗╸  ┗╸
+    // ┗╸  ┗╸  ┗╸  ┗╸
+    // ━╸  ━╸  ━╸  ━╸
+    //
+    for (size_t i = 0; i < m; i++) {
+      E_u[i*n] = V[i*n] - V[i*n + 1];
+      E_u[(i+1)*n - 1] = V[(i+1)*n - 2] - V[(i+1)*n - 1];
+    }
+
+    // Sides y-direction
+    //
+    // ┗╸  ┗╸  ┗╸  ┗╸
+    // ┗╸  ┗╸  ┗╸  ┗╸
+    // ┗╸  ┗╸  ┗╸  ┗╸
+    // ┗╸  ┗╸  ┗╸  ┗╸
+    //
+    for (size_t j = 0; j < m; j++) {
+      E_v[j] = V[j] - V[n + j];
+      E_v[(m-1)*n + j] = V[(m-2)*n + j] - V[(m-1)*n + j];
+    }
+  }
+
 }

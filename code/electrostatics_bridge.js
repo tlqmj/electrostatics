@@ -1,8 +1,9 @@
 // emcc electrostatics_wasm.cpp -o electrostatics_wasm.html -s EXPORTED_FUNCTIONS="['_sor_step', '_sor']" -s EXTRA_EXPORTED_RUNTIME_METHODS="['ccall', 'cwrap']"
 
 // Wrap c++ classes
-sor_step = Module.cwrap('sor_step', 'number', ['number', 'number', 'number', 'number', 'number']);
-sor      = Module.cwrap('sor',      'number', ['number', 'number', 'number', 'number', 'number', 'number', 'number']);
+sor_step       = Module.cwrap('sor_step',      'number', ['number', 'number', 'number', 'number', 'number']);
+sor            = Module.cwrap('sor',           'number', ['number', 'number', 'number', 'number', 'number', 'number', 'number']);
+electric_field = Module.cwrap('electric_field', null,    ['number', 'number', 'number', 'number', 'number']);
 
 class Simulation {
   // INPUTS:
@@ -22,22 +23,41 @@ class Simulation {
 
     // Allocate arrays in emscripten memory and create views ('v.data',
     // 'v.data_vec', 'ie.data' and 'ie.data_vec') for easy access from js.
-    this.v = {};
-    this.v._ptr    = Module._malloc(this.m*this.n*Float32Array.BYTES_PER_ELEMENT);
-    this.v._heap   = new Uint8Array(Module.HEAPU8.buffer, this.v._ptr, this.m*this.n*Float32Array.BYTES_PER_ELEMENT);
-    this.v.data_vec   = new Float32Array( this.v._heap.buffer, this.v._heap.byteOffset, this.m*this.n);
-    this.v.data   = []
+    this.v          = {};
+    this.v._ptr     = Module._malloc(this.m*this.n*Float32Array.BYTES_PER_ELEMENT);
+    this.v._heap    = new Uint8Array(Module.HEAPU8.buffer, this.v._ptr, this.m*this.n*Float32Array.BYTES_PER_ELEMENT);
+    this.v.data_vec = new Float32Array( this.v._heap.buffer, this.v._heap.byteOffset, this.m*this.n);
+    this.v.data     = []
     for (var i = 0; i < this.m; i++) {
       this.v.data.push(new Float32Array(this.v._heap.buffer, this.v._heap.byteOffset + i*Float32Array.BYTES_PER_ELEMENT*this.n, this.n))
     }
 
-    this.ie = {};
-    this.ie._ptr   = Module._malloc(this.m*this.n*Uint8Array.BYTES_PER_ELEMENT);
-    this.ie._heap  = new Uint8Array(Module.HEAPU8.buffer, this.ie._ptr, this.m*this.n*Uint8Array.BYTES_PER_ELEMENT);
-    this.ie.data_vec  = new Uint8Array(  this.ie._heap.buffer, this.ie._heap.byteOffset, this.m*this.n);
-    this.ie.data = []
+    this.ie          = {};
+    this.ie._ptr     = Module._malloc(this.m*this.n*Uint8Array.BYTES_PER_ELEMENT);
+    this.ie._heap    = new Uint8Array(Module.HEAPU8.buffer, this.ie._ptr, this.m*this.n*Uint8Array.BYTES_PER_ELEMENT);
+    this.ie.data_vec = new Uint8Array(  this.ie._heap.buffer, this.ie._heap.byteOffset, this.m*this.n);
+    this.ie.data     = []
     for (var i = 0; i < this.m; i++) {
       this.ie.data.push(new Uint8Array(this.ie._heap.buffer, this.ie._heap.byteOffset + i*Uint8Array.BYTES_PER_ELEMENT*this.n, this.n))
+    }
+
+    this.e            = {};
+    this.e.u          = {};
+    this.e.u._ptr     = Module._malloc(this.m*this.n*Float32Array.BYTES_PER_ELEMENT);
+    this.e.u._heap    = new Uint8Array(Module.HEAPU8.buffer, this.e.u._ptr, this.m*this.n*Float32Array.BYTES_PER_ELEMENT);
+    this.e.u.data_vec = new Float32Array( this.e.u._heap.buffer, this.e.u._heap.byteOffset, this.m*this.n);
+    this.e.u.data     = []
+    for (var i = 0; i < this.m; i++) {
+      this.e.u.data.push(new Float32Array(this.e.u._heap.buffer, this.e.u._heap.byteOffset + i*Float32Array.BYTES_PER_ELEMENT*this.n, this.n))
+    }
+
+    this.e.v          = {};
+    this.e.v._ptr     = Module._malloc(this.m*this.n*Float32Array.BYTES_PER_ELEMENT);
+    this.e.v._heap    = new Uint8Array(Module.HEAPU8.buffer, this.e.v._ptr, this.m*this.n*Float32Array.BYTES_PER_ELEMENT);
+    this.e.v.data_vec = new Float32Array( this.e.v._heap.buffer, this.e.v._heap.byteOffset, this.m*this.n);
+    this.e.v.data     = []
+    for (var i = 0; i < this.m; i++) {
+      this.e.v.data.push(new Float32Array(this.e.v._heap.buffer, this.e.v._heap.byteOffset + i*Float32Array.BYTES_PER_ELEMENT*this.n, this.n))
     }
 
     if (v !== undefined && ie !== undefined) {
@@ -45,8 +65,9 @@ class Simulation {
     } else {
       this.v.data_vec.fill(0.0);
       this.ie.data_vec.fill(false);
+      this.e.u.data_vec.fill(0.0);
+      this.e.v.data_vec.fill(0.0);
       this.set_simple_boundary_condition();
-
     }
   }
 
@@ -104,7 +125,10 @@ class Simulation {
     if(!(omega >= 1 && omega < 2))                  throw "ARGUMENT ERROR in Simulation.run. omega must be such that 1 <= omega < 2."
     if(!(Number.isInteger(maxiter) && maxiter > 0)) throw "ARGUMENT ERROR in Simulation.run. maxiter must be a positive integer."
 
-    return sor(this.v._heap.byteOffset, this.ie._heap.byteOffset, this.m, this.n, omega, maxiter, tol);
+    var delta = sor(this.v._heap.byteOffset, this.ie._heap.byteOffset, this.m, this.n, omega, maxiter, tol);
+    electric_field(this.e.u._heap.byteOffset, this.e.v._heap.byteOffset, this.v._heap.byteOffset, this.m, this.n);
+
+    return delta;
   }
 
   add_electrode(i, j, val) {
