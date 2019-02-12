@@ -1,6 +1,6 @@
 var Module = {
   onRuntimeInitialized: function() {
-    sim = new Simulation(50, 50)
+    sim = new Simulation(51, 51)
     sim.add_electrode(25, 20, 10)
     sim.add_electrode(25, 30, -10)
     sim.run(1.75, 10000, 1e-5)
@@ -17,20 +17,26 @@ var Module = {
         z:sim.v.data,
         type:'surface',
         colorscale:'Viridis',
-        //aspectratio: {x: 1, y: 1},
+        aspectratio: {x: 1, y: 1},
+        ncontours: 30,
         contours: {
+          x: {highlight: false},
+          y: {highlight: false},
           coloring: 'heatmap',
           showlabels:true,
-          x: {highlight: false},
-          y: {highlight: false}
+          labelfont: {
+            size: 12,
+            color: 'white'
+          },
+        },
+        line: {
+          color: 'white'
         },
         colorbar: {
-          title: 'V',
           titleside: 'right',
-          titlefont: {
-            size: 14,
-            family: 'Arial, sans-serif'
-          }
+          ticksuffix: " V",
+          thickness: 10,
+          thicknessmode: 'pixels'
         },
         zsmooth: 'best'
       }],
