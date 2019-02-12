@@ -1,16 +1,6 @@
 var Module = {
   onRuntimeInitialized: function() {
-    sim = new Simulation(51, 51)
-    sim.add_electrode(25, 20, 10)
-    sim.add_electrode(25, 30, -10)
-    sim.run(1.75, 10000, 1e-5)
-
-
-    buttons = {
-      'surface': document.getElementById('surface'),
-      'contour': document.getElementById('contour')
-    }
-
+    sim = new Simulation(101, 101);
     plot = {
       div: 'plotPane',
       data: [{
@@ -57,10 +47,16 @@ var Module = {
       options: {responsive: true}
     }
 
-    draw_plot('surface');
-    hoverInfo = document.getElementById('hoverinfo')
-    buttons['surface'].addEventListener('click', function() {select_plot('surface')})
-    buttons['contour'].addEventListener('click', function() {select_plot('contour')})
+    buttons = {
+      'surface': document.getElementById('surface'),
+      'contour': document.getElementById('contour')
+    }
+
+    document.getElementById('scenarios').addEventListener('change', function(change) {select_scenario(change.target.value)});
+    document.getElementById('plot_type').addEventListener('change', function(change) {select_plot_type(change.target.value)});
+
+    plot.data[0].type = document.getElementById('plot_type').value; // FIX ME: Ugly
+    select_scenario(document.getElementById('scenarios').value);
   }
 }
 
@@ -78,4 +74,38 @@ function select_plot(type) {
     buttons[type].classList.add("button-primary");
     Plotly.restyle(plot.div, {type: type})
   }
+}
+
+function select_plot_type(type) {
+    switch (type) {
+      case "surface":
+        draw_plot("surface");
+        break;
+      case "contour":
+        draw_plot("contour");
+        break;
+      default:
+        throw "ARGUMENT ERROR in select_plot_type. No such plot type."
+    }
+}
+
+function select_scenario(scenario) {
+  sim.clear();
+  switch (scenario) {
+    case "dipole":
+      sim.add_electrode(50, 40,  10);
+      sim.add_electrode(50, 60, -10);
+      break;
+    case "capacitor":
+      for (var i = 29; i < 70; i++) {
+        sim.add_electrode(i, 40,  10);
+        sim.add_electrode(i, 60, -10);
+      }
+      break;
+    default:
+      throw "ARGUMENT ERROR in select_scenario. Invalid scenario";
+      break;
+  }
+  sim.run(1.75, 10000, 1e-6);
+  draw_plot();
 }

@@ -161,6 +161,8 @@ class Simulation {
   clear() {
     this.v.data_vec.fill(0.0);
     this.ie.data_vec.fill(false);
+    this.e.u.data_vec.fill(0.0);
+    this.e.v.data_vec.fill(0.0);
     this.set_simple_boundary_condition();
   }
 

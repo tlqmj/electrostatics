@@ -40,12 +40,22 @@
     <div class="row" id="mainRow">
       <div class="two columns" id="description">
         <h4>Simulación electroestática</h4>
-        <p> Dipolo simulado usando el método de sobre-relajación sucesiva (<a href="https://en.wikipedia.org/wiki/Successive_over-relaxation">SOR</a>). </p>
+        <p> Simulaciones usando el método de sobre-relajación sucesiva (<a href="https://en.wikipedia.org/wiki/Successive_over-relaxation">SOR</a>). </p>
         <p> Como condición de frontera se toma V = 0. </p>
         <p> El diseño del programa está basado en el propuesto por <a href="https://physics.weber.edu/schroeder/javacourse/">Daniel V. Schroeder</a>
             en <a href="(https://physics.weber.edu/schroeder/javacourse/relaxation.pdf">Electrostatic Potential by the Relaxation Method</a>. </p>
-        <button class="button-primary" id="surface">Superficie</button>
-        <button class="" id="contour">Equipotenciales</button>
+        <form action="#">
+          <label for="scenarios"> Configuración </label>
+          <select id="scenarios" name="scenarios">
+            <option value="dipole">Dipolo</option>
+            <option value="capacitor">Capacitor</option>
+          </select>
+          <label for="plot_type">Gráfico</label>
+          <select name="plot_type" id="plot_type">
+            <option value="surface">Superficie</option>
+            <option value="contour">Equipotenciales</option>
+          </select>
+        </form>
       </div>
       <div class="ten columns" id="plotPane"></div>
       <div class="twelve columns" id="footer">
