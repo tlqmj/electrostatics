@@ -113,4 +113,22 @@ extern "C"
     }
   }
 
+  // Bilinearly interpolate the uniformely 1-spaced matrix of samples M.
+  // That is, gives a value for M[x][y] where x, y are not integers.
+  // Care must be taken not to extrapolate (call with x>m, x<0, y>n, y<0).
+  float interpolate(
+    float *M,
+    int    m,
+    int    n,
+    float  x,
+    float  y)
+  {
+    int x1 = floor(x);
+    int x2 = ceil(x);
+    int y1 = floor(y);
+    int y2 = ceil(y);
+
+    return M[x1*n + y1]*(x2-x)*(y2-y) + M[x2*n + y1]*(x-x1)*(y2-y) + M[x1*n + y2]*(x2-x)*(y-y1) + M[x2*n + y2]*(x-x1)*(y-y1);
+  }
+
 }

@@ -4,6 +4,7 @@
 sor_step       = Module.cwrap('sor_step',      'number', ['number', 'number', 'number', 'number', 'number']);
 sor            = Module.cwrap('sor',           'number', ['number', 'number', 'number', 'number', 'number', 'number', 'number']);
 electric_field = Module.cwrap('electric_field', null,    ['number', 'number', 'number', 'number', 'number']);
+interpolate    = Module.cwrap('interpolate',   'number', ['number', 'number', 'number', 'number', 'number']);
 
 class Simulation {
   // INPUTS:
