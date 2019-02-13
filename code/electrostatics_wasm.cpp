@@ -85,7 +85,7 @@ extern "C"
     // o   ━╸  ━╸   o
     //
     for (size_t i = 1; i < m-1; i++) { for (size_t j = 0; j < n; j++) {
-      E_v[i*n + j] = (V[(i-1)*n + (j-1)] - V[(i+1)*n + j])/2.0;
+      E_v[i*n + j] = (V[(i-1)*n + j] - V[(i+1)*n + j])/2.0;
     }}
 
     // Sides x-direction
